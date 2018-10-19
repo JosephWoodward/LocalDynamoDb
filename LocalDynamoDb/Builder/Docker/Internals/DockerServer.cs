@@ -14,6 +14,7 @@ namespace LocalDynamoDb.Builder.Docker.Internals
     {
         public string ImageName { get; }
         public string ContainerName { get; }
+        public LocalDynamoDbState State { get; set; }
 
         protected DockerServer(string imageName, string containerName)
         {
@@ -26,10 +27,10 @@ namespace LocalDynamoDb.Builder.Docker.Internals
             var list = await client.Containers.ListContainersAsync(new ContainersListParameters
             {
                 All = true
-            });
+            }).ConfigureAwait(false);
             
             var container = list.FirstOrDefault(x => x.Names.Contains("/" + ContainerName));
-            return container?.State == "running" ? LocalDynamoDbState.Running : LocalDynamoDbState.Stopped;
+            return container?.State == "running" ? LocalDynamoDbState.Running : State;
         }
 
         public async Task Start(IDockerClient client)
@@ -37,7 +38,7 @@ namespace LocalDynamoDb.Builder.Docker.Internals
             if (StartAction != StartAction.None)
                 return;
             
-            var images = await client.Images.ListImagesAsync(new ImagesListParameters { MatchName = ImageName });
+            var images = await client.Images.ListImagesAsync(new ImagesListParameters { MatchName = ImageName }).ConfigureAwait(false);
             if (images.Count == 0)
             {
                 Console.WriteLine($"Fetching Docker image '{ImageName}'");
@@ -47,13 +48,13 @@ namespace LocalDynamoDb.Builder.Docker.Internals
                 });
                 
                 var cts = new CancellationTokenSource();
-                await client.Images.CreateImageAsync(new ImagesCreateParameters { FromImage = ImageName, Tag = "latest" }, new AuthConfig(), progress, cts.Token);
+                await client.Images.CreateImageAsync(new ImagesCreateParameters { FromImage = ImageName, Tag = "latest" }, new AuthConfig(), progress, cts.Token).ConfigureAwait(false);
             }
 
             var list = await client.Containers.ListContainersAsync(new ContainersListParameters
             {
                 All = true
-            });
+            }).ConfigureAwait(false);
 
             if (!string.IsNullOrWhiteSpace(ContainerName))
             {
@@ -73,20 +74,22 @@ namespace LocalDynamoDb.Builder.Docker.Internals
                 }    
             }
 
-            var started = await client.Containers.StartContainerAsync(ContainerName, new ContainerStartParameters());
+            var started = await client.Containers.StartContainerAsync(ContainerName, new ContainerStartParameters()).ConfigureAwait(false);
             if (!started)
             {
+                State = LocalDynamoDbState.Stopped;
                 throw new InvalidOperationException($"Container '{ContainerName}' did not start!");
             }
 
             var i = 0;
             while (true)
             {
-                var r = await IsReady();
+                var r = await IsReady().ConfigureAwait(false);
                 if (r)
                 {
                     Console.WriteLine($"Container '{ContainerName}' is ready.");
                     StartAction = StartAction.Started;
+                    State = LocalDynamoDbState.Running;
                     return;
                 }
                 
@@ -94,6 +97,7 @@ namespace LocalDynamoDb.Builder.Docker.Internals
 
                 if (i > 20)
                 {
+                    State = LocalDynamoDbState.Stopped;
                     throw new TimeoutException($"Container {ContainerName} does not seem to be responding in a timely manner");
                 }
 
@@ -119,8 +123,11 @@ namespace LocalDynamoDb.Builder.Docker.Internals
             });
         }
 
-        public async Task Stop(IDockerClient client)
-            => await client.Containers.StopContainerAsync(ContainerName, new ContainerStopParameters());
+        public Task StopAsync(IDockerClient client)
+        {
+            State = LocalDynamoDbState.Stopped;
+            return client.Containers.StopContainerAsync(ContainerName, new ContainerStopParameters());
+        }
 
         protected abstract Task<bool> IsReady();
 

@@ -16,8 +16,8 @@ namespace LocalDynamoDb.Tests.JarBinaries.Fixtures
             _dynamo = builder.Build();
         }
 
-        public Task<bool> Start()
-            => _dynamo.Start();
+        public Task<bool> StartAsync()
+            => _dynamo.StartAsync();
         
         public AmazonDynamoDBClient Client
             => _client ?? (_client = _dynamo.CreateClient());
@@ -27,7 +27,7 @@ namespace LocalDynamoDb.Tests.JarBinaries.Fixtures
 
         public void Dispose()
         {
-            _dynamo.Stop();
+            Task.Run(() => _dynamo.StopAsync().ConfigureAwait(false));
             _client?.Dispose();
         }
     }

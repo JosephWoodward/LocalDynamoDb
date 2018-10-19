@@ -22,14 +22,14 @@ namespace LocalDynamoDb.Builder.JavaBinaries.Internals
         private static Process CreateProcess(int portNumber, string path)
         {
             var processJar = new Process();
-            var arguments = $"-Djava.library.path=.{Path.DirectorySeparatorChar}DynamoDBLocal_lib -jar DynamoDBLocal.jar curl -O https://bootstrap.pypa.io/get-pip.py -port {portNumber}";
+            var arguments = $"-Djava.library.path=.{Path.DirectorySeparatorChar.ToString()}DynamoDBLocal_lib -jar DynamoDBLocal.jar curl -O https://bootstrap.pypa.io/get-pip.py -port {portNumber.ToString()}";
 
             processJar.StartInfo.FileName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "\"" + @"java" + "\"" : "java";;
             processJar.StartInfo.Arguments = arguments;
 
             var rootFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             /*var relativePath = Path.DirectorySeparatorChar + "dynamodblocal";*/
-            var relativePath = Path.DirectorySeparatorChar + "dynamodblocal";
+            var relativePath = Path.DirectorySeparatorChar.ToString() + "dynamodblocal";
             var osFriendlyAbsPath = Path.GetFullPath(rootFolder + relativePath).Replace('\\', Path.DirectorySeparatorChar);
             var jarFilePath = Path.Combine(osFriendlyAbsPath, "DynamoDBLocal.jar");
 
@@ -51,7 +51,7 @@ namespace LocalDynamoDb.Builder.JavaBinaries.Internals
             return processJar;
         }
 
-        public Task<bool> Start()
+        public Task<bool> StartAsync()
         {
             Console.WriteLine("Starting in memory DynamoDb");
             var success = _dynamoProcess.Start();

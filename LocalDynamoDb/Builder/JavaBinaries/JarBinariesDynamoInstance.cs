@@ -16,10 +16,10 @@ namespace LocalDynamoDb.Builder.JavaBinaries
             _process = new DynamoProcessHandler(_configuration);
         }
         
-        public Task<bool> Start()
-            => _process.Start();
+        public Task<bool> StartAsync()
+            => _process.StartAsync();
 
-        public Task Stop()
+        public Task StopAsync()
             => _process.Stop();
 
         public Task<LocalDynamoDbState> GetStateAsync()

@@ -20,7 +20,7 @@ namespace LocalDynamoDb.Tests.Docker
             
             var builder = new LocalDynamoDbBuilder().Container().UsingDefaultImage().ExposePort();
             var dynamo = builder.Build();
-            dynamo.Start();
+            dynamo.StartAsync();
             
             _client = dynamo.CreateClient();
         }

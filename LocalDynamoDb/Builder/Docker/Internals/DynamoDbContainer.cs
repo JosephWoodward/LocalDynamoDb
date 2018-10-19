@@ -25,7 +25,7 @@ namespace LocalDynamoDb.Builder.Docker.Internals
                 var credentials = new BasicAWSCredentials("abc", "abc");
                 var client = new AmazonDynamoDBClient(credentials, config);
 
-                var t = await client.ListTablesAsync();
+                var t = await client.ListTablesAsync().ConfigureAwait(false);
                 var result = t.HttpStatusCode == HttpStatusCode.OK;
 
                 return result;

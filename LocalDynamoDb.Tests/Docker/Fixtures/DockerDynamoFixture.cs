@@ -16,7 +16,7 @@ namespace LocalDynamoDb.Tests.Docker.Fixtures
             var builder = new LocalDynamoDbBuilder().Container().UsingDefaultImage().ExposePort();
             _dynamo = builder.Build();
 
-            _dynamo.Start();
+            Task.Run(() => _dynamo.StartAsync().ConfigureAwait(false)).Wait();
         }
 
         public AmazonDynamoDBClient Client
@@ -27,7 +27,7 @@ namespace LocalDynamoDb.Tests.Docker.Fixtures
 
         public void Dispose()
         {
-            _dynamo.Stop();
+            Task.Run(() => _dynamo.StopAsync().ConfigureAwait(false)).Wait();
             _client?.Dispose();
         }
     }

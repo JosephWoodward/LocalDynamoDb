@@ -43,7 +43,7 @@ namespace LocalDynamoDb.Builder.Docker
         public Task<LocalDynamoDbState> GetStateAsync()
             => _container.GetStateAsync(_dockerClient);
 
-        public Task<bool> Start()
+        public Task<bool> StartAsync()
         {
             try
             {
@@ -59,8 +59,8 @@ namespace LocalDynamoDb.Builder.Docker
             return Task.FromResult(true);
         }
 
-        public Task Stop()
-            => _container.Stop(_dockerClient);
+        public Task StopAsync()
+            => _container.StopAsync(_dockerClient);
 
         public AmazonDynamoDBClient CreateClient()
         {
