@@ -50,10 +50,9 @@ namespace LocalDynamoDb.Builder.Docker
             return this;
         }
 
-        public IDynamoBuilder ExposePort(int portNumber)
+        public IDynamoBuilder ExposePort(int portNumber = 8000)
         {
             _configuration.PortNumber = portNumber;
-
             return this;
         }
 

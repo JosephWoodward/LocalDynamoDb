@@ -1,11 +1,11 @@
-using System;
 using System.Threading.Tasks;
 using Amazon.DynamoDBv2;
 using LocalDynamoDb.Builder;
+using Xunit;
 
 namespace LocalDynamoDb.Tests.JarBinaries.Fixtures
 {
-    public class JarBinariesDynamoFixture : IDisposable
+    public class JarBinariesDynamoFixture : IAsyncLifetime
     {
         private readonly IDynamoInstance _dynamo;
         private AmazonDynamoDBClient _client;
@@ -15,9 +15,6 @@ namespace LocalDynamoDb.Tests.JarBinaries.Fixtures
             var builder = new LocalDynamoDbBuilder().JarBinaries().InDefaultPath().OnDefaultPort();
             _dynamo = builder.Build();
         }
-
-        public Task<bool> StartAsync()
-            => _dynamo.StartAsync();
         
         public AmazonDynamoDBClient Client
             => _client ?? (_client = _dynamo.CreateClient());
@@ -25,10 +22,15 @@ namespace LocalDynamoDb.Tests.JarBinaries.Fixtures
         public Task<LocalDynamoDbState> GetStateAsync()
             => _dynamo.GetStateAsync();
 
-        public void Dispose()
+        public async Task InitializeAsync()
         {
-            Task.Run(() => _dynamo.StopAsync().ConfigureAwait(false));
+            await _dynamo.StartAsync();
+        }
+
+        public Task DisposeAsync()
+        {
             _client?.Dispose();
+            return _dynamo.StopAsync();
         }
     }
 }

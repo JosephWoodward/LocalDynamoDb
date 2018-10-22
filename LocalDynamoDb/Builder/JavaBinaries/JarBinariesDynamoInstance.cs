@@ -1,3 +1,5 @@
+using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Amazon.DynamoDBv2;
 using Amazon.Runtime;
@@ -15,9 +17,21 @@ namespace LocalDynamoDb.Builder.JavaBinaries
             _configuration = configuration;
             _process = new DynamoProcessHandler(_configuration);
         }
-        
+
         public Task<bool> StartAsync()
-            => _process.StartAsync();
+        {
+            try
+            {
+                _process.StartAsync().Wait(TimeSpan.FromSeconds(10));
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
+
+            return Task.FromResult(true);
+        }
 
         public Task StopAsync()
             => _process.Stop();

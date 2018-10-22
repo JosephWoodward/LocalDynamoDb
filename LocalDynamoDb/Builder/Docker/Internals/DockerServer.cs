@@ -33,7 +33,7 @@ namespace LocalDynamoDb.Builder.Docker.Internals
             return container?.State == "running" ? LocalDynamoDbState.Running : State;
         }
 
-        public async Task Start(IDockerClient client)
+        public async Task StartAsync(IDockerClient client)
         {
             if (StartAction != StartAction.None)
                 return;
@@ -42,10 +42,7 @@ namespace LocalDynamoDb.Builder.Docker.Internals
             if (images.Count == 0)
             {
                 Console.WriteLine($"Fetching Docker image '{ImageName}'");
-                var progress = new Progress<JSONMessage>(x =>
-                {
-                    Console.WriteLine("Status: " + x.Status);
-                });
+                var progress = new Progress<JSONMessage>();
                 
                 var cts = new CancellationTokenSource();
                 await client.Images.CreateImageAsync(new ImagesCreateParameters { FromImage = ImageName, Tag = "latest" }, new AuthConfig(), progress, cts.Token).ConfigureAwait(false);

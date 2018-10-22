@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using Amazon.DynamoDBv2;
 using LocalDynamoDb.Builder;
 using LocalDynamoDb.Tests.Docker.Fixtures;
@@ -7,30 +8,25 @@ using Xunit.Abstractions;
 
 namespace LocalDynamoDb.Tests.Docker
 {
-    public class DockerTests : IClassFixture<DockerClientTestFixture>, IDisposable
+    public class DockerTests : IClassFixture<DeleteImageTestFixture>, IDisposable
     {
-        private readonly DockerClientTestFixture _dockerClient;
+        private readonly DeleteImageTestFixture _fixture;
         private readonly ITestOutputHelper _output;
-        private readonly AmazonDynamoDBClient _client;
+        private readonly AmazonDynamoDBClient _dynamoClient;
 
-        public DockerTests(DockerClientTestFixture dockerClient, ITestOutputHelper output)
+        public DockerTests(DeleteImageTestFixture fixture, ITestOutputHelper output)
         {
-            _dockerClient = dockerClient;
+            _fixture = fixture;
             _output = output;
-            
-            var builder = new LocalDynamoDbBuilder().Container().UsingDefaultImage().ExposePort();
-            var dynamo = builder.Build();
-            dynamo.StartAsync();
-            
-            _client = dynamo.CreateClient();
         }
         
         /*[Fact]*/
-        public void PullsContainer()
+        public async Task PullsContainer()
         {
+            await _fixture.StartLocalDynamoAsync();
         }
         
         public void Dispose()
-            => _client.Dispose();
+            => _dynamoClient.Dispose();
     }
 }

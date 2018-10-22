@@ -27,6 +27,15 @@ namespace LocalDynamoDb.Tests.Docker.Fixtures
         {
             return await _client.Containers.ListContainersAsync(new ContainersListParameters(), CancellationToken.None);
         }
+
+        public async Task DeleteLocalDynamoImage()
+        {
+            await _client.Images.DeleteImageAsync("amazon/dynamodb-local", new ImageDeleteParameters
+            {
+                Force = true,
+                PruneChildren = true
+            });
+        }
         
         private static Uri LocalDockerUri()
         {

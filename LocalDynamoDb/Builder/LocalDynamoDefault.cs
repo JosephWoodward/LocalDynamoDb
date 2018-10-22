@@ -1,4 +1,4 @@
-namespace LocalDynamoDb.Builder.Docker
+namespace LocalDynamoDb.Builder
 {
     internal static class LocalDynamoDefault
     {

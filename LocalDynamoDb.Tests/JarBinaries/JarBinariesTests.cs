@@ -22,7 +22,6 @@ namespace LocalDynamoDb.Tests.JarBinaries
         public async Task DynamoDbStarts()
         {
             // Arrange
-            await _fixture.StartAsync();
             var tableRequest = new CreateTableRequest
             {
                 TableName = "testTable",
@@ -59,9 +58,6 @@ namespace LocalDynamoDb.Tests.JarBinaries
         [Fact]
         public async Task StateIsRunning()
         {
-            // Arrange
-            await _fixture.StartAsync();
-            
             // Act
             var state = await _fixture.GetStateAsync();
             

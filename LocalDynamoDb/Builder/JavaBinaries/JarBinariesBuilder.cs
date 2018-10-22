@@ -44,15 +44,12 @@ namespace LocalDynamoDb.Builder.JavaBinaries
             return this;
         }
 
+        public IDynamoBuilder OnDefaultPort()
+            => OnPort(LocalDynamoDefault.DefaultPortNumber);
+        
         public IDynamoBuilder OnPort(int portNumber)
         {
             _configuration.PortNumber = portNumber;
-            return this;
-        }
-
-        public IDynamoBuilder OnDefaultPort()
-        {
-            _configuration.PortNumber = LocalDynamoDefault.DefaultPortNumber;
             return this;
         }
 

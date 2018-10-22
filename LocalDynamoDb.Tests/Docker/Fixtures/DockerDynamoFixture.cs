@@ -1,12 +1,11 @@
-using System;
 using System.Threading.Tasks;
 using Amazon.DynamoDBv2;
 using LocalDynamoDb.Builder;
-using LocalDynamoDb.Builder.Docker;
+using Xunit;
 
 namespace LocalDynamoDb.Tests.Docker.Fixtures
 {
-    public class DockerDynamoFixture : IDisposable
+    public class DockerDynamoFixture : IAsyncLifetime
     {
         private readonly IDynamoInstance _dynamo;
         private AmazonDynamoDBClient _client;
@@ -15,8 +14,6 @@ namespace LocalDynamoDb.Tests.Docker.Fixtures
         {
             var builder = new LocalDynamoDbBuilder().Container().UsingDefaultImage().ExposePort();
             _dynamo = builder.Build();
-
-            Task.Run(() => _dynamo.StartAsync().ConfigureAwait(false)).Wait();
         }
 
         public AmazonDynamoDBClient Client
@@ -25,10 +22,13 @@ namespace LocalDynamoDb.Tests.Docker.Fixtures
         public Task<LocalDynamoDbState> GetStateAsync()
             => _dynamo.GetStateAsync();
 
-        public void Dispose()
+        public Task InitializeAsync() 
+            => _dynamo.StartAsync();
+
+        public Task DisposeAsync()
         {
-            Task.Run(() => _dynamo.StopAsync().ConfigureAwait(false)).Wait();
             _client?.Dispose();
+            return _dynamo.StopAsync();
         }
     }
 }

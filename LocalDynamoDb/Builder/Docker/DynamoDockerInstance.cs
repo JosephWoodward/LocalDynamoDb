@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
 using Amazon.DynamoDBv2;
 using Amazon.Runtime;
@@ -44,11 +45,13 @@ namespace LocalDynamoDb.Builder.Docker
             => _container.GetStateAsync(_dockerClient);
 
         public Task<bool> StartAsync()
+            => StartAsync(default);
+        
+        public Task<bool> StartAsync(CancellationToken cancellationToken)
         {
             try
             {
-                // TODO Perhaps return task and let consumer wait?
-                _container.Start(_dockerClient).Wait(TimeSpan.FromSeconds(60));
+                _container.StartAsync(_dockerClient).Wait(TimeSpan.FromSeconds(60));
             }
             catch (Exception e)
             {
