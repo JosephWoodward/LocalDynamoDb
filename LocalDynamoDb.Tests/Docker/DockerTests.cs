@@ -1,32 +1,32 @@
-using System;
 using System.Threading.Tasks;
-using Amazon.DynamoDBv2;
 using LocalDynamoDb.Builder;
 using LocalDynamoDb.Tests.Docker.Fixtures;
+using Shouldly;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace LocalDynamoDb.Tests.Docker
 {
-    public class DockerTests : IClassFixture<DeleteImageTestFixture>, IDisposable
+    public class DockerTests : IClassFixture<DeleteImageTestFixture>
     {
         private readonly DeleteImageTestFixture _fixture;
-        private readonly ITestOutputHelper _output;
-        private readonly AmazonDynamoDBClient _dynamoClient;
 
-        public DockerTests(DeleteImageTestFixture fixture, ITestOutputHelper output)
+        public DockerTests(DeleteImageTestFixture fixture)
         {
             _fixture = fixture;
-            _output = output;
         }
         
-        /*[Fact]*/
+        [Fact]
         public async Task PullsContainer()
         {
-            await _fixture.StartLocalDynamoAsync();
+            // Arrange
+            await _fixture.DeleteContainerIfExists();
+
+            // Act
+            await _fixture.LocalDynamo.StartAsync();
+            
+            // Assert
+            var state = await _fixture.LocalDynamo.GetStateAsync();
+            state.ShouldBe(LocalDynamoDbState.Running);
         }
-        
-        public void Dispose()
-            => _dynamoClient.Dispose();
     }
 }

@@ -1,56 +1,57 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.WebSockets;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
-using Amazon.DynamoDBv2;
 using Docker.DotNet;
 using Docker.DotNet.Models;
 using LocalDynamoDb.Builder;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace LocalDynamoDb.Tests.Docker.Fixtures
 {
-    public class DeleteImageTestFixture : IDisposable, IAsyncLifetime
+    public class DeleteImageTestFixture : IAsyncLifetime, IDisposable
     {
         private readonly DockerClient _docker;
-        private readonly IDynamoInstance _localDynamo;
-        private AmazonDynamoDBClient _dynamo;
+        private readonly IDynamoInstance _dynamo;
+        private const string ImageName = "amazon/dynamodb-local";
 
         public DeleteImageTestFixture()
         {
             _docker = new DockerClientConfiguration(LocalDockerUri()).CreateClient();
-            _localDynamo = new LocalDynamoDbBuilder().Container().UsingDefaultImage().ExposePort().Build();
+            _dynamo = new LocalDynamoDbBuilder().Container().UsingDefaultImage().ExposePort().Build();
         }
 
-        public Task StartLocalDynamoAsync()
-            => _localDynamo.StartAsync();
-        
-        public AmazonDynamoDBClient Client
-            => _dynamo ?? (_dynamo = _localDynamo.CreateClient());
+        public IDynamoInstance LocalDynamo 
+            => _dynamo;
 
-        public async Task<IList<ImagesListResponse>> ListImages(string imageName)
-            => await _docker.Images.ListImagesAsync(new ImagesListParameters { MatchName = imageName });
+        public async Task<IList<ImagesListResponse>> ListLocalDynamoImages()
+            => await _docker.Images.ListImagesAsync(new ImagesListParameters {MatchName = ImageName});
 
-        public async Task<IList<ImagesListResponse>> ImageExists(string image)
+        public async Task<bool> LocalDynamoImageExists()
         {
-            IList<ImagesListResponse> images = await _docker.Images.ListImagesAsync(new ImagesListParameters {All = true});
+            var images = await _docker.Images.ListImagesAsync(new ImagesListParameters {MatchName = ImageName});
+            return images.Any();
+        }
+
+        public async Task DeleteContainerIfExists()
+        {
+            var images = await ListLocalDynamoImages();
+            if (!images.Any())
+                return;
             
-        }
-
-        public async Task<IList<ContainerListResponse>> Stats()
-        {
-            return await _docker.Containers.ListContainersAsync(new ContainersListParameters(), CancellationToken.None);
-        }
-
-        private async Task DeleteLocalDynamoImage()
-        {
-            await _docker.Images.DeleteImageAsync("amazon/dynamodb-local", new ImageDeleteParameters
+            foreach (var tag in images.FirstOrDefault().RepoTags)
             {
-                Force = true,
-                PruneChildren = true
-            });
+                await _docker.Images.DeleteImageAsync(tag, new ImageDeleteParameters
+                {
+                    Force = true,
+                    PruneChildren = true
+                });    
+            }   
         }
         
         private static Uri LocalDockerUri()
@@ -63,11 +64,10 @@ namespace LocalDynamoDb.Tests.Docker.Fixtures
             => _docker.Dispose();
 
         public Task InitializeAsync()
-            => DeleteLocalDynamoImage();
+            => Task.CompletedTask;
 
         public Task DisposeAsync()
-        {
-            throw new NotImplementedException();
-        }
+            => _dynamo.StopAsync();
+        
     }
 }
